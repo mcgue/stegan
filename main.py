@@ -61,8 +61,11 @@ def extract_message(image_path):
 
     return message
 
-# Example usage
-message_to_hide = "Hello, this is a secret message!"
+# Run Functions
+# Get message to hide
+message_to_hide = input("Enter the message you want to hide: "
+
+#
 hide_message("image.png", message_to_hide)
 
 extracted_message = extract_message("hidden_message.png")
