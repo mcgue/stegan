@@ -3,7 +3,7 @@
 # import module (need to have pillow installed)
 from PIL import Image
 
-# Function to hide a message in an image
+# Function to hide the message
 def hide_message(image_path, message):
     img = Image.open(image_path)
     pixels = img.load()
@@ -11,11 +11,13 @@ def hide_message(image_path, message):
     message += '\0'  # Add null character as end marker
     binary_message = ''.join(format(ord(char), '08b') for char in message)
 
-    if len(binary_message) > (width * height * 3):  # Check if message can fit
+    # Check if message can fit
+    if len(binary_message) > (width * height * 3):
         print("Message is too long to be hidden in this image.")
         return
 
     idx = 0
+    # Add in message
     for y in range(height):
         for x in range(width):
             pixel = pixels[x, y]
@@ -32,8 +34,7 @@ def hide_message(image_path, message):
     img.save('hidden_message.png')
     print("Message hidden successfully.")
 
-# Function to extract a message from an image
-# Function to extract a message from an image
+# Function to extract the message
 def extract_message(image_path):
     img = Image.open(image_path)
     pixels = img.load()
@@ -47,7 +48,8 @@ def extract_message(image_path):
             for value in pixel:
                 binary_message += str(value & 1)
 
-                if binary_message.endswith(sentinel):  # Check for sentinel
+                # Check for sentinel
+                if binary_message.endswith(sentinel):
                     binary_message = binary_message[:-len(sentinel)]  # Remove sentinel
                     message = ''.join(chr(int(binary_message[i:i + 8], 2)) for i in range(0, len(binary_message), 8))
                     print("Extracted message:", message)
