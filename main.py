@@ -33,30 +33,29 @@ def hide_message(image_path, message):
     print("Message hidden successfully.")
 
 # Function to extract a message from an image
+# Function to extract a message from an image
 def extract_message(image_path):
     img = Image.open(image_path)
     pixels = img.load()
     width, height = img.size
     binary_message = ''
+    sentinel = '00000000'  # Sentinel for end of message
 
     for y in range(height):
         for x in range(width):
             pixel = pixels[x, y]
-            r = pixel[0]
-            binary_message += str(r & 1)
+            for value in pixel:
+                binary_message += str(value & 1)
 
-            if binary_message[-8:] == '00000000':  # Check for null character as end marker
-                break
-        else:
-            continue
-        break
-
-    message = ''.join(chr(int(binary_message[i:i + 8], 2)) for i in range(0, len(binary_message) - 8, 8))
-    print("Extracted message:", message)
+                if binary_message.endswith(sentinel):  # Check for sentinel
+                    binary_message = binary_message[:-len(sentinel)]  # Remove sentinel
+                    message = ''.join(chr(int(binary_message[i:i + 8], 2)) for i in range(0, len(binary_message), 8))
+                    print("Extracted message:", message)
+                    return
 
 # Example usage
 image_path = 'image.png'
-message_to_hide = "Hello, this is a hidden message!"
+message_to_hide = input("Add message to hide: ")
 
 # Hide message
 hide_message(image_path, message_to_hide)
