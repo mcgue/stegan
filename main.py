@@ -1,72 +1,65 @@
-# Hides a message in an image
+# Hide message in an image
 
+# import module (need to have pillow installed)
 from PIL import Image
-
-# Function to convert an integer to binary string
-def int_to_bin(number):
-    return bin(number)[2:].zfill(8)
 
 # Function to hide a message in an image
 def hide_message(image_path, message):
     img = Image.open(image_path)
     pixels = img.load()
-
-    # Convert the message to binary
+    width, height = img.size
+    message += '\0'  # Add null character as end marker
     binary_message = ''.join(format(ord(char), '08b') for char in message)
 
-    # Check if the message can fit in the image
-    if len(binary_message) > img.width * img.height * 3:
-        raise ValueError("Message is too large to fit in the image")
+    if len(binary_message) > (width * height * 3):  # Check if message can fit
+        print("Message is too long to be hidden in this image.")
+        return
 
-    index = 0
-    for y in range(img.height):
-        for x in range(img.width):
-            r, g, b = pixels[x, y]
+    idx = 0
+    for y in range(height):
+        for x in range(width):
+            pixel = pixels[x, y]
+            new_pixel = []
+            for value in pixel:
+                if idx < len(binary_message):
+                    new_value = (value & 254) | int(binary_message[idx])
+                    idx += 1
+                else:
+                    new_value = value
+                new_pixel.append(new_value)
+            pixels[x, y] = tuple(new_pixel)
 
-            if index < len(binary_message):
-                r = int_to_bin(r)
-                g = int_to_bin(g)
-                b = int_to_bin(b)
-
-                r = int(r[:-1] + binary_message[index], 2)
-                index += 1
-                if index < len(binary_message):
-                    g = int(g[:-1] + binary_message[index], 2)
-                    index += 1
-                if index < len(binary_message):
-                    b = int(b[:-1] + binary_message[index], 2)
-                    index += 1
-
-                pixels[x, y] = (r, g, b)
-
-    img.save("hidden_message.png")
+    img.save('hidden_message.png')
+    print("Message hidden successfully.")
 
 # Function to extract a message from an image
 def extract_message(image_path):
     img = Image.open(image_path)
     pixels = img.load()
-
+    width, height = img.size
     binary_message = ''
-    for y in range(img.height):
-        for x in range(img.width):
-            r, g, b = pixels[x, y]
-            binary_message += int_to_bin(r)[-1]
-            binary_message += int_to_bin(g)[-1]
-            binary_message += int_to_bin(b)[-1]
 
-    message = ''
-    for i in range(0, len(binary_message), 8):
-        byte = binary_message[i:i + 8]
-        message += chr(int(byte, 2))
+    for y in range(height):
+        for x in range(width):
+            pixel = pixels[x, y]
+            r = pixel[0]
+            binary_message += str(r & 1)
 
-    return message
+            if binary_message[-8:] == '00000000':  # Check for null character as end marker
+                break
+        else:
+            continue
+        break
 
-# Run Functions
-# Get message to hide
-message_to_hide = input("Enter the message you want to hide: "
+    message = ''.join(chr(int(binary_message[i:i + 8], 2)) for i in range(0, len(binary_message) - 8, 8))
+    print("Extracted message:", message)
 
-#
-hide_message("image.png", message_to_hide)
+# Example usage
+image_path = 'image.png'
+message_to_hide = "Hello, this is a hidden message!"
 
-extracted_message = extract_message("hidden_message.png")
-print("Extracted message:", extracted_message)
+# Hide message
+hide_message(image_path, message_to_hide)
+
+# Extract message from the modified image
+extract_message('hidden_message.png')
